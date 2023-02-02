@@ -41,7 +41,7 @@
             </table>
         @else
             <div class="alert alert-danger" role="alert">
-                Nothing Found BRO
+                No Posts Found
             </div>
         @endif
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 
 class PostController extends Controller
 {
@@ -37,21 +38,30 @@ class PostController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'post_pic' => ['required', 'mimes:jpeg,png,jpg'],
             'title' => ['required', 'unique:posts,title'],
             'body' => ['required']
         ],[
-            'title.required' => "Please provide the title!"
+            'post_pic.mimes' => 'Only Images can be uploaded!',
+            'title.required' => "Please provide the title!",
+            'post_pic.required' => "Please provide the post picture!"
         ]);
+
+        $extension = $request->post_pic->extension();
+        $imageName = "P-".time().'.'.$extension;
+
+        $request->file('post_pic')->move(public_path('post_pics'), $imageName);
 
         $result = Post::create([
             'title' => $request->title,
-            'body' => $request->body
+            'body' => $request->body,
+            'post_picture' => $imageName
         ]);
 
         if ($result) {
-            return back()->with('success', 'Magic has been spelled');
+            return back()->with('success', 'Post has been added');
         } else {
-            return back()->with('failed', 'Magic has failed to spell');
+            return back()->with('failed', 'Post has failed to add');
         }
     }
 
@@ -99,9 +109,9 @@ class PostController extends Controller
         ]);
 
         if ($result) {
-            return back()->with('success', 'Magic has been spelled');
+            return back()->with('success', 'Post has been updated');
         } else {
-            return back()->with('failed', 'Magic has failed to spell');
+            return back()->with('failed', 'Post has failed to update');
         }
     }
 
@@ -113,12 +123,18 @@ class PostController extends Controller
      */
     public function destroy(Post $post)
     {
+        $image_path = 'post_pics/'. $post->post_picture;
+
+        if (File::exists($image_path)){
+            unlink($image_path);
+        };
+
         $result = Post::find($post->id)->delete();
 
         if ($result) {
-            return redirect()->route('show_posts')->with('success', 'Magic has been spelled');
+            return redirect()->route('show_posts')->with('success', 'Post has been deleted');
         } else {
-            return redirect()->route('show_posts')->with('failed', 'Magic has failed to spell');
+            return redirect()->route('show_posts')->with('failed', 'Post has failed to delete');
         }
     }
 }
